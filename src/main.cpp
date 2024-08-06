@@ -17,11 +17,14 @@
  * @licence end@
  */
 
+
+
 #include <QModelIndex>
 #include <QApplication>
 #include <QStyleFactory>
 
 #include <qdltoptmanager.h>
+#include <QtCore/QProcessEnvironment>
 
 #include "mainwindow.h"
 
@@ -33,6 +36,9 @@ int main(int argc, char *argv[])
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 #endif
 
+    // 设置一个新的环境变量
+    qputenv("QT_QPA_PLATFORM_PLUGIN_PATH", "");
+
     // check if silent mode or help is requested
     // if yes, activate offscreen mode to be able to run also without display
     for(int i=0;i<argc;i++)
@@ -43,6 +49,8 @@ int main(int argc, char *argv[])
             break;
         }
     }
+
+
 
     QApplication a(argc, argv);
 

@@ -151,7 +151,7 @@ bool SearchDialog::getSearchFromBeginning()
 
 void SearchDialog::setStartLine(long int start)
 {
-  startLine=start;
+    startLine=start;
 }
 
 
@@ -217,7 +217,7 @@ int SearchDialog::find()
         return 0;
     }
 
-   if( ( (match == true) || ( getSearchFromBeginning() == false )) && false == searchtoIndex() )
+    if( ( (match == true) || ( getSearchFromBeginning() == false )) && false == searchtoIndex() )
     {
         // single step search
         QModelIndexList list = table->selectionModel()->selection().indexes();
@@ -235,32 +235,32 @@ int SearchDialog::find()
             setStartLine(index.row());
         }
     }
-   else
-   {
-      focusRow(-1);
-   }
+    else
+    {
+        focusRow(-1);
+    }
 
 
     if ( true == getSearchFromBeginning() )
     {
-      //qDebug() << "Start from the beginning" << __LINE__;
+        //qDebug() << "Start from the beginning" << __LINE__;
     }
     else
     {
         if (table->selectionModel() != nullptr )
-         {
-          {
-           if ( false == table->selectionModel()->selectedIndexes().isEmpty() )
+        {
             {
-             if (table->selectionModel()->selectedIndexes().first().row() > -1)
-              {
-               lStartLine = table->selectionModel()->selectedIndexes().first().row();
-               setStartLine( lStartLine );
-              }
-           }
-          }
-         }
-         qDebug() << "Search starting at line" << startLine;
+                if ( false == table->selectionModel()->selectedIndexes().isEmpty() )
+                {
+                    if (table->selectionModel()->selectedIndexes().first().row() > -1)
+                    {
+                        lStartLine = table->selectionModel()->selectedIndexes().first().row();
+                        setStartLine( lStartLine );
+                    }
+                }
+            }
+        }
+        qDebug() << "Search starting at line" << startLine;
     }
 
     searchBorder = startLine;
@@ -284,7 +284,7 @@ int SearchDialog::find()
         {
             if ( false == fSilentMode)
             {
-            QMessageBox::warning(0, QString("Search"), QString("Invalid regular expression!"));
+                QMessageBox::warning(0, QString("Search"), QString("Invalid regular expression!"));
             }
             emit searchProgressChanged(false);
             return 1;
@@ -305,20 +305,20 @@ int SearchDialog::find()
         dTimeStampStart = TimeStampStarttime.toDouble();
         dTimeStampStop = TimeStampStoptime.toDouble();
         if( (dTimeStampStop -  dTimeStampStart) >= 0 )
-         {
-         //qDebug() << "Timestamp search enabled" << dTimeStampStart << dTimeStampStop << __LINE__;
-         is_TimeStampSearchSelected = true;
-         }
+        {
+            //qDebug() << "Timestamp search enabled" << dTimeStampStart << dTimeStampStop << __LINE__;
+            is_TimeStampSearchSelected = true;
+        }
         else
         {
-         qDebug() << "Invalid timestamp range" << dTimeStampStart << dTimeStampStop << __LINE__;
-         is_TimeStampSearchSelected = false;
-         if ( false == fSilentMode)
-         {
-         QMessageBox::warning(0, QString("Search"), QString("Invalid timestamp range !"));
-         }
-         emit searchProgressChanged(false);
-         return 1;
+            qDebug() << "Invalid timestamp range" << dTimeStampStart << dTimeStampStop << __LINE__;
+            is_TimeStampSearchSelected = false;
+            if ( false == fSilentMode)
+            {
+                QMessageBox::warning(0, QString("Search"), QString("Invalid timestamp range !"));
+            }
+            emit searchProgressChanged(false);
+            return 1;
         }
     }
 
@@ -348,7 +348,7 @@ int SearchDialog::find()
             qDebug() << "Given APID or CTID exceeds limit !";
             if ( false == fSilentMode)
             {
-            QMessageBox::warning(0, QString("Search"), QString("Given APID or CTID exceeds limit !"));
+                QMessageBox::warning(0, QString("Search"), QString("Given APID or CTID exceeds limit !"));
             }
             emit searchProgressChanged(false);
             return 2;
@@ -357,7 +357,7 @@ int SearchDialog::find()
     }
     else
     {
-     fIs_APID_CTID_requested = false;
+        fIs_APID_CTID_requested = false;
     }
 
     findMessages(startLine,searchBorder,searchTextRegExpression);
@@ -454,7 +454,14 @@ void SearchDialog::findMessages(long int searchLine, long int searchBorder, QReg
 
         /* get the message with the selected item id */
         buf = file->getMsgFilter(searchLine);
-        msg.setMsg(buf);
+        if(file->getFileSuffix() == "txt")
+        {
+            msg.setMsgTxt(buf);
+        }
+        else
+        {
+            msg.setMsg(buf);
+        }
         msg.setIndex(file->getMsgFilterPos(searchLine));
 
         /* decode the message if desired - could this call be avoided as the message is already decoded elsewhere ? */
@@ -479,28 +486,28 @@ void SearchDialog::findMessages(long int searchLine, long int searchBorder, QReg
         } // get the header text in case not empty
         headerText = text;
         if ( true == fIs_APID_CTID_requested )
+        {
+            QString APID = headerText.section(" ",5,5);
+            QString CTID = headerText.section(" ",6,6);
+            // and check if the condition is valid
+            if ( ( APID.compare(stApid,is_Case_Sensitive) == 0 ) && ( stCtid.size() == 0 ) )
             {
-              QString APID = headerText.section(" ",5,5);
-              QString CTID = headerText.section(" ",6,6);
-              // and check if the condition is valid
-              if ( ( APID.compare(stApid,is_Case_Sensitive) == 0 ) && ( stCtid.size() == 0 ) )
-              {
-                 // qDebug() << "APID hit" << searchLine << __LINE__;
-              }
-              else if ( ( CTID.compare(stCtid,is_Case_Sensitive) == 0 ) && ( stApid.size() == 0 ) )
-              {
-                 // qDebug() << "CTID hit" << searchLine << __LINE__;
-              }
-              else if( ( CTID.compare(stCtid,is_Case_Sensitive) == 0) && ( APID.compare(stApid,is_Case_Sensitive) == 0 ) )
-              {
-                 // qDebug() << "CTID & APID hit" << searchLine << __LINE__;
-              }
-              else
-              {
-                 //qDebug() << APID << CTID << searchLine;
-                 continue; // because if APID or CTID  doesn not fit there is no need to search in any payload or header
-              }
+                // qDebug() << "APID hit" << searchLine << __LINE__;
             }
+            else if ( ( CTID.compare(stCtid,is_Case_Sensitive) == 0 ) && ( stApid.size() == 0 ) )
+            {
+                // qDebug() << "CTID hit" << searchLine << __LINE__;
+            }
+            else if( ( CTID.compare(stCtid,is_Case_Sensitive) == 0) && ( APID.compare(stApid,is_Case_Sensitive) == 0 ) )
+            {
+                // qDebug() << "CTID & APID hit" << searchLine << __LINE__;
+            }
+            else
+            {
+                //qDebug() << APID << CTID << searchLine;
+                continue; // because if APID or CTID  doesn not fit there is no need to search in any payload or header
+            }
+        }
 
 
         is_TimeStampRangeValid = false;
@@ -510,12 +517,12 @@ void SearchDialog::findMessages(long int searchLine, long int searchBorder, QReg
             QString TargetTimeStamp = headerText.section(" ",2,2);
             if( ( dTimeStampStart <= TargetTimeStamp.toDouble() ) && ( dTimeStampStop >= TargetTimeStamp.toDouble() ) )
             {
-                    //qDebug() << "Within time stamp range" << dTimeStampStart <<  TargetTimeStamp.toDouble() << dTimeStampStop << __LINE__;
-                    is_TimeStampRangeValid = true;
+                //qDebug() << "Within time stamp range" << dTimeStampStart <<  TargetTimeStamp.toDouble() << dTimeStampStop << __LINE__;
+                is_TimeStampRangeValid = true;
             }
             else
                 continue;
-         }
+        }
 
 
         if(getHeader() == true) // header is search enabled
@@ -539,14 +546,14 @@ void SearchDialog::findMessages(long int searchLine, long int searchBorder, QReg
             {
                 if(true == getText().isEmpty())
                 {
-                 if ( foundLine(searchLine) ) // so no pattern always fits
-                  {
-                   //qDebug() << "Header search hit in"<< __LINE__;
-                   break;
-                  }
-                 else
-                  continue;
-                 }
+                    if ( foundLine(searchLine) ) // so no pattern always fits
+                    {
+                        //qDebug() << "Header search hit in"<< __LINE__;
+                        break;
+                    }
+                    else
+                        continue;
+                }
                 else if(true == headerText.contains(getText(),is_Case_Sensitive)) // header search
                 {
                     {
@@ -570,10 +577,10 @@ void SearchDialog::findMessages(long int searchLine, long int searchBorder, QReg
         {
             if ( true == is_payLoadSearchSelected )
             {
-              if ( true == payLoadStartpatternCheck() ) // if payload pattern search range is set we try to detect the ranges
-                 {
-                 //qDebug() << "Found start payload pattern in " << searchLine << __LINE__;
-                 }
+                if ( true == payLoadStartpatternCheck() ) // if payload pattern search range is set we try to detect the ranges
+                {
+                    //qDebug() << "Found start payload pattern in " << searchLine << __LINE__;
+                }
             }
 
             if( text.isEmpty())
@@ -650,7 +657,7 @@ bool SearchDialog::payLoadStartpatternCheck()
         is_PayLoadRangeValid = true;
         is_PayloadStartFound = true;
     }
-   return is_PayLoadRangeValid;
+    return is_PayLoadRangeValid;
 }
 
 
@@ -659,20 +666,20 @@ bool SearchDialog::payLoadStoppatternCheck()
     // When the stop payload patern is found, consider range as ivalid
     if(true == is_PayloadStartFound  &&  true == is_payLoadSearchSelected && true == is_payLoadSearchSelected)
     {
-       if(tempPayLoad.contains(payloadEnd))
-       {
-        //qDebug() << "Found stop payload pattern" << __LINE__;
-        is_PayloadEndFound = true;
-        is_PayLoadRangeValid = false;
-       }
-       //else qDebug() << "No stop payload pattern" << __LINE__;
+        if(tempPayLoad.contains(payloadEnd))
+        {
+            //qDebug() << "Found stop payload pattern" << __LINE__;
+            is_PayloadEndFound = true;
+            is_PayLoadRangeValid = false;
+        }
+        //else qDebug() << "No stop payload pattern" << __LINE__;
     }
-   return is_PayLoadRangeValid;
+    return is_PayLoadRangeValid;
 }
 
 bool SearchDialog::timeStampPayloadValidityCheck(long int searchLine)
 {
-   // qDebug() << "timeStampPayloadValidityCheck" << __LINE__;
+    // qDebug() << "timeStampPayloadValidityCheck" << __LINE__;
     if(true == is_TimeStampSearchSelected)
     {
         if(true == is_TimeStampRangeValid)
@@ -742,7 +749,7 @@ void SearchDialog::on_pushButtonNext_clicked() // connected to main window line 
     int result = find();
     for(int i=0; i<lineEdits->size();i++)
     {
-       setSearchColour(lineEdits->at(i),result);
+        setSearchColour(lineEdits->at(i),result);
     }
 }
 
@@ -752,7 +759,7 @@ void SearchDialog::on_pushButtonPrevious_clicked()
     int result = find();
     for(int i=0; i<lineEdits->size();i++)
     {
-       setSearchColour(lineEdits->at(i),result);
+        setSearchColour(lineEdits->at(i),result);
     }
 }
 
@@ -763,7 +770,7 @@ void SearchDialog::findNextClicked()
     int result = find();
     for(int i=0; i<lineEdits->size();i++)
     {
-       setSearchColour(lineEdits->at(i),result);
+        setSearchColour(lineEdits->at(i),result);
     }
 }
 
@@ -773,33 +780,33 @@ void SearchDialog::findPreviousClicked()
 
     int result = find();
     for(int i=0; i<lineEdits->size();i++){
-       setSearchColour(lineEdits->at(i),result);
+        setSearchColour(lineEdits->at(i),result);
     }
 }
 
 void SearchDialog::on_lineEditText_textEdited(QString newText)
 {
-        {
-            // block signal so that it does not trigger a setText back on lineEdits->at(0)!
-            QSignalBlocker signalBlocker(lineEdits->at(1));
-            lineEdits->at(1)->setText(newText);
-        }
-        for(int i=0; i<lineEdits->size();i++){
-            if(lineEdits->at(0)->text().isEmpty())
-                setSearchColour(lineEdits->at(i),1);
-        }
+    {
+        // block signal so that it does not trigger a setText back on lineEdits->at(0)!
+        QSignalBlocker signalBlocker(lineEdits->at(1));
+        lineEdits->at(1)->setText(newText);
+    }
+    for(int i=0; i<lineEdits->size();i++){
+        if(lineEdits->at(0)->text().isEmpty())
+            setSearchColour(lineEdits->at(i),1);
+    }
 }
 void SearchDialog::textEditedFromToolbar(QString newText)
 {
-        {
-            // block signal so that it does not trigger a setText back on lineEdits->at(1)!
-            QSignalBlocker signalBlocker(lineEdits->at(0));
-            lineEdits->at(0)->setText(newText);
-        }
-        for(int i=0; i<lineEdits->size();i++){
-            if(lineEdits->at(0)->text().isEmpty())
-                setSearchColour(lineEdits->at(i),1);
-        }
+    {
+        // block signal so that it does not trigger a setText back on lineEdits->at(1)!
+        QSignalBlocker signalBlocker(lineEdits->at(0));
+        lineEdits->at(0)->setText(newText);
+    }
+    for(int i=0; i<lineEdits->size();i++){
+        if(lineEdits->at(0)->text().isEmpty())
+            setSearchColour(lineEdits->at(i),1);
+    }
 }
 
 void SearchDialog::on_pushButtonColor_clicked()
@@ -831,8 +838,8 @@ void SearchDialog::updateColorbutton()
 void SearchDialog::addToSearchIndex(long int searchLine)
 {
     //qDebug() << "Add hit line to search table" << searchLine << __LINE__;
-    m_searchtablemodel->add_SearchResultEntry(file->getMsgFilterPos(searchLine));    
- }
+    m_searchtablemodel->add_SearchResultEntry(file->getMsgFilterPos(searchLine));
+}
 
 void SearchDialog::registerSearchTableModel(SearchTableModel *model)
 {
@@ -882,7 +889,7 @@ void SearchDialog::clearCacheHistory()
 
 void SearchDialog::on_checkBoxHeader_toggled(bool checked)
 {
-   QDltSettingsManager::getInstance()->setValue("other/search/checkBoxHeader", checked);
+    QDltSettingsManager::getInstance()->setValue("other/search/checkBoxHeader", checked);
 }
 
 
@@ -905,14 +912,14 @@ void SearchDialog::on_checkBoxRegExp_toggled(bool checked)
 
 void SearchDialog::starttime(void)
 {
-long int temps;
+    long int temps;
 
 #if defined(_MSC_VER)
-   SYSTEMTIME systemtime;
-   GetSystemTime(&systemtime);
-   time_t timestamp_sec;
-   time(&timestamp_sec);
-   temps = (time_t)timestamp_sec;
+    SYSTEMTIME systemtime;
+    GetSystemTime(&systemtime);
+    time_t timestamp_sec;
+    time(&timestamp_sec);
+    temps = (time_t)timestamp_sec;
 #else
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -924,15 +931,15 @@ long int temps;
 
 void SearchDialog::stoptime(void)
 {
-long int temps;
-long int dtemps;
+    long int temps;
+    long int dtemps;
 
 #if defined(_MSC_VER)
-   SYSTEMTIME systemtime;
-   GetSystemTime(&systemtime);
-   time_t timestamp_sec;
-   time(&timestamp_sec);
-   temps = (time_t)timestamp_sec;
+    SYSTEMTIME systemtime;
+    GetSystemTime(&systemtime);
+    time_t timestamp_sec;
+    time(&timestamp_sec);
+    temps = (time_t)timestamp_sec;
 #else
     struct timeval tv;
     gettimeofday(&tv, NULL);

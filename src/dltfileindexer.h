@@ -68,8 +68,13 @@ public:
 
     typedef enum { modeNone, modeIndex, modeIndexAndFilter, modeFilter, modeDefaultFilter } IndexingMode;
 
+    typedef enum { dltFormat,txtFormat} FileFormat;
+
     // create main index
     bool index(int num);
+
+    // create txt main index
+    bool indexTxt(int num);
 
     qint64 getfileerrors(void);
 
@@ -148,6 +153,9 @@ public:
     qint64 getFilterIndexEnd() const;
     void setFilterIndexEnd(qint64 newFilterIndexEnd);
 
+    FileFormat getFileFormat() const;
+    void setFileFormat(FileFormat newFileFormat);
+
 protected:
 
 private:
@@ -210,6 +218,8 @@ private:
     bool filterIndexEnabled;
     qint64 filterIndexStart;
     qint64 filterIndexEnd;
+
+    FileFormat fileFormat;
 
 signals:
 

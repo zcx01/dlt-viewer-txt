@@ -29,6 +29,9 @@ extern "C"
 #include "dlt_common.h"
 }
 
+
+#define QDATETIMEMSF "yyyy/MM/dd hh:mm:ss.zzz"
+
 QDltMsg::QDltMsg()
 {
     clear();
@@ -894,6 +897,39 @@ bool QDltMsg::setMsg(const QByteArray& buf, bool withStorageHeader,bool supportD
     }
 }
 
+bool QDltMsg::setMsgTxt(const QByteArray &buf)
+{
+    clear();
+    setEcuid("ECU1");
+    setApid("QSYM");
+    setCtid("QSLA");
+    setType(QDltMsg::DltTypeLog);
+    setMode(DltModeNonVerbose);
+    if(buf.size() > sizeof(QDATETIMEMSF))
+    {
+        QDateTime dateTime = QDateTime::fromString(buf.mid(0,sizeof(QDATETIMEMSF)-1), QDATETIMEMSF);
+        // 检查转换是否有效
+        if (dateTime.isNull())
+        {
+            payload = buf;
+        }
+        else
+        {
+            timestamp = dateTime.toSecsSinceEpoch();
+            time = timestamp;
+            microseconds = dateTime.toMSecsSinceEpoch() % (quint64)1000ul * 1000;
+            payload = buf.mid(sizeof(QDATETIMEMSF)-1,buf.size());
+        }
+    }
+    else
+    {
+        payload = buf;
+    }
+    versionNumber = 2;
+    fileSuffix = "txt";
+    return true;
+}
+
 bool QDltMsg::parseArguments()
 {
     QDltArgument argument;
@@ -1049,6 +1085,8 @@ void QDltMsg::clear()
     segmentationAbortReason = 0;
 
     index = -1;
+
+    fileSuffix = "";
 }
 
 void QDltMsg::clearArguments()
@@ -1114,16 +1152,24 @@ QString QDltMsg::toStringPayload() const
     text.reserve(1024);
 
     if((getMode()==QDltMsg::DltModeNonVerbose) && (getType()!=QDltMsg::DltTypeControl) && (getNumberOfArguments() == 0)) {
-        text += QString("[%1] ").arg(getMessageId());
-        if(versionNumber==2)
-            data = payload.mid(0,(payload.size()>260)?260:payload.size());
-        else
-            data = payload.mid(4,(payload.size()>260)?256:(payload.size()-4));
-        if(!data.isEmpty())
+
+        if(fileSuffix == "txt")
         {
-            text += toAsciiTable(data,false,false,true,1024,1024,false);
-            text += "|";
-            text += toAscii(data, false);
+            text = QString(payload);
+        }
+        else
+        {
+            text += QString("[%1] ").arg(getMessageId());
+            if(versionNumber==2)
+                data = payload.mid(0,(payload.size()>260)?260:payload.size());
+            else
+                data = payload.mid(4,(payload.size()>260)?256:(payload.size()-4));
+            if(!data.isEmpty())
+            {
+                text += toAsciiTable(data,false,false,true,1024,1024,false);
+                text += "|";
+                text += toAscii(data, false);
+            }
         }
         return text;
     }

@@ -47,6 +47,9 @@ public:
     */
     QVector<qint64> indexAll;
 
+
+    QString fileSuffix;
+
 };
 
 //! Access to a DLT log file.
@@ -262,6 +265,9 @@ public:
      * \return File name
      **/
     QString getFileName(int num = 0);
+
+
+    QString getFileSuffix(int num=0);
 
     //! Get number of messages of the underlying file object
     /*!

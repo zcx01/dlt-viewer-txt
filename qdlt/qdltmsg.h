@@ -438,6 +438,9 @@ public:
     */
     bool setMsg(const QByteArray& buf,bool withStorageHeader = true,bool supportDLTv2 = false);
 
+
+    bool setMsgTxt(const QByteArray &buf);
+
     //! Check the message size provided by a byte array containing the DLT message, without parsing the whole message.
     /*!
       \param data the buffer containing the DLT messages.
@@ -645,6 +648,9 @@ private:
 
     //! Position of current file in a QDltFile
     int index;
+
+
+    QString fileSuffix;
 
 };
 

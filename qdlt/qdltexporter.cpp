@@ -204,7 +204,14 @@ bool QDltExporter::getMsg(unsigned long int num,QDltMsg &msg,QByteArray &buf)
             qDebug() << "Buffer empty in" << __FILE__ << __LINE__;
             return false;
         }
-        result =  msg.setMsg(buf);
+        if(from->getFileSuffix() == "txt")
+        {
+            result =  msg.setMsgTxt(buf);
+        }
+        else
+        {
+            result =  msg.setMsg(buf);
+        }
         msg.setIndex(num);
     }
     else if(exportSelection == QDltExporter::SelectionFiltered)
@@ -215,7 +222,14 @@ bool QDltExporter::getMsg(unsigned long int num,QDltMsg &msg,QByteArray &buf)
             qDebug() << "Buffer empty in" << __FILE__ << __LINE__;
             return false;
         }
-        result =  msg.setMsg(buf);
+        if(from->getFileSuffix() == "txt")
+        {
+            result =  msg.setMsgTxt(buf);
+        }
+        else
+        {
+            result =  msg.setMsg(buf);
+        }
         msg.setIndex(from->getMsgFilterPos(num));
     }
     else if(exportSelection == QDltExporter::SelectionSelected)
@@ -226,7 +240,14 @@ bool QDltExporter::getMsg(unsigned long int num,QDltMsg &msg,QByteArray &buf)
             qDebug() << "Buffer empty in" << __FILE__ << __LINE__;
             return false;
         }
-        result =  msg.setMsg(buf);
+        if(from->getFileSuffix() == "txt")
+        {
+            result =  msg.setMsgTxt(buf);
+        }
+        else
+        {
+            result =  msg.setMsg(buf);
+        }
         msg.setIndex(from->getMsgFilterPos(selectedRows[num]));
     }
     else

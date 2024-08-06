@@ -433,7 +433,7 @@ void MainWindow::initView()
     QFileSystemModel *model = new QFileSystemModel;
 
     model->setNameFilterDisables(false);
-    model->setNameFilters(QStringList() << "*.dlt" << "*.dlf" << "*.dlp" << "*.pcap" << "*.mf4");
+    model->setNameFilters(QStringList() << "*.dlt" << "*.dlf" << "*.dlp" << "*.pcap" << "*.mf4" << "*.txt");
     model->setRootPath(QDir::rootPath());
 
     /* sort dir entries */
@@ -1102,27 +1102,21 @@ void MainWindow::on_action_menuFile_Open_triggered()
     workingDirectory.setDltDirectory(QFileInfo(fileNames[0]).absolutePath());
 
     QDltImporter importer;
-    QStringList dltFileNames,pcapFileNames,mf4FileNames,txtFileNames;
+    QStringList dltFileNames,pcapFileNames,mf4FileNames;
 
     for ( const auto& i : fileNames )
     {
-        if(i.endsWith(".dlt",Qt::CaseInsensitive))
+        if(i.endsWith(".dlt",Qt::CaseInsensitive) || i.endsWith(".txt",Qt::CaseInsensitive))
             dltFileNames+=i;
         else if(i.endsWith(".pcap",Qt::CaseInsensitive))
             pcapFileNames+=i;
         else if(i.endsWith(".mf4",Qt::CaseInsensitive))
             mf4FileNames+=i;
-        else if(i.endsWith(".txt",Qt::CaseInsensitive))
-            txtFileNames+=i;
     }
 
     if(!dltFileNames.isEmpty()&&pcapFileNames.isEmpty()&&mf4FileNames.isEmpty())
     {
         onOpenTriggered(dltFileNames);
-    }
-    else if(dltFileNames.isEmpty()&&!txtFileNames.isEmpty())
-    {
-        onOpenTriggered(txtFileNames);
     }
     else if(dltFileNames.isEmpty()&&!pcapFileNames.isEmpty()&&mf4FileNames.isEmpty())
     {
@@ -1159,7 +1153,7 @@ void MainWindow::onOpenTriggered(QStringList filenames)
 {
     /* change DLT file working directory */
     workingDirectory.setDltDirectory(QFileInfo(filenames[0]).absolutePath());
-    openTxtFile(filenames);
+    openDltFile(filenames);
     outputfileIsFromCLI = false;
     outputfileIsTemporary = false;
 
@@ -1256,100 +1250,6 @@ bool MainWindow::openDltFile(QStringList fileNames)
         tempfile.close();
         fileNames.append(tempfile.fileName());
     }
-
-    /* open existing file and append new data */
-    outputfile.setFileName(fileNames.last());
-    setCurrentFile(fileNames.last());
-    if( true == outputfile.open(QIODevice::WriteOnly|QIODevice::Append) )
-    {
-        openFileNames = fileNames;
-        isDltFileReadOnly = false;
-        //qDebug() << "Opening file(s) wo" << outputfile.fileName() << __FILE__ << __LINE__;
-        if(QDltOptManager::getInstance()->isCommandlineMode())
-            // if dlt viewer started as converter or with plugin option load file non multithreaded
-            reloadLogFile(false,false);
-        else
-            // normally load log file mutithreaded
-            reloadLogFile();
-        outputfile.close(); // open later again when writing
-        ret = true;
-    }
-    else
-    {
-        /* try opening read only */
-        if(outputfile.open(QIODevice::ReadOnly))
-        {
-            openFileNames = fileNames;
-            isDltFileReadOnly = true;
-            if(QDltOptManager::getInstance()->isCommandlineMode())
-                // if dlt viewer started as converter or with plugin option load file non multithreaded
-                reloadLogFile(false,false);
-            else
-                // normally load log file mutithreaded
-                reloadLogFile();
-            outputfile.close(); // open later again when writing
-            ret = true;
-            //qDebug() << "Loading file" << fileNames.last() << outputfile.errorString();
-        }
-        else
-        {
-            if (QDltOptManager::getInstance()->issilentMode())
-              {
-                qDebug() << "Accessing logfile error" << fileNames.last() << outputfile.errorString();
-              }
-            else
-              {
-                QMessageBox::critical(0, QString("DLT Viewer"), QString("Cannot open log file \"%1\"\n%2").arg(fileNames.last()).arg(outputfile.errorString()));
-              }
-            ret = false;
-        }
-    }
-
-    // clear index filter
-    ui->checkBoxFilterRange->setChecked(false);
-    ui->lineEditFilterStart->setText(QString("0"));
-    ui->lineEditFilterEnd->setText(QString("0"));
-
-    if (ret)
-        emit dltFileLoaded(fileNames);
-
-    //qDebug() << "Open files done" << __FILE__ << __LINE__;
-    return ret;
-}
-
-bool MainWindow::openTxtFile(QStringList fileNames)
-{
-    /* close existing file */
-    bool ret = false;
-
-    if(fileNames.size()==0)
-    {
-        qDebug() << "Open filename error in " << __FILE__ << __LINE__;
-        return false;
-    }
-    //clear search history list
-    //searchHistory.clear();
-    //clear all the action buttons from history
-    for (int i = 0; i < MaxSearchHistory; i++)
-    {
-        searchHistoryActs[i]->setVisible(false);
-    }
-
-    // clear the cache stored for the history
-    searchDlg->clearCacheHistory();
-
-    if(outputfile.isOpen())
-    {
-        if (outputfile.size() == 0)
-        {
-            deleteactualFile();
-        }
-        else
-        {
-            outputfile.close();
-        }
-    }
-
 
     /* open existing file and append new data */
     outputfile.setFileName(fileNames.last());
@@ -1585,7 +1485,7 @@ void MainWindow::on_actionAppend_triggered()
 
     for ( const auto& i : fileNames )
     {
-        if(i.endsWith(".dlt",Qt::CaseInsensitive))
+        if(i.endsWith(".dlt",Qt::CaseInsensitive) || i.endsWith(".txt",Qt::CaseInsensitive))
             appendDltFile(i);
         else if(i.endsWith(".pcap",Qt::CaseInsensitive))
         {
@@ -4376,7 +4276,15 @@ void MainWindow::updateIndex()
 
     for(int num=oldsize;num<qfile.size();num++)
     {
-     qmsg.setMsg(qfile.getMsg(num),true,settings->supportDLTv2Decoding);
+        if (qfile.getFileSuffix() == "txt")
+        {
+            qmsg.setMsgTxt(qfile.getMsg(num));
+        }
+        else
+        {
+            qmsg.setMsg(qfile.getMsg(num),true,settings->supportDLTv2Decoding);
+        }
+
      qmsg.setIndex(num);
 
      if ( true == pluginsEnabled ) // we check the general plugin enabled/disabled switch
@@ -4481,7 +4389,14 @@ void MainWindow::onTableViewSelectionChanged(const QItemSelection & selected, co
         ui->tableView->scrollTo(index);
 
         msgIndex = qfile.getMsgFilterPos(index.row());
-        msg.setMsg(qfile.getMsgFilter(index.row()),true,settings->supportDLTv2Decoding);
+        if(qfile.getFileSuffix() == "txt")
+        {
+           msg.setMsgTxt(qfile.getMsgFilter(index.row()));
+        }
+        else
+        {
+           msg.setMsg(qfile.getMsgFilter(index.row()),true,settings->supportDLTv2Decoding);
+        }
         msg.setIndex(qfile.getMsgFilterPos(index.row()));
         activeViewerPlugins = pluginManager.getViewerPlugins();
         activeDecoderPlugins = pluginManager.getDecoderPlugins();
@@ -6821,7 +6736,14 @@ void MainWindow::filterAddTable() {
     }
 
     data = qfile.getMsgFilter(index.row());
-    msg.setMsg(data,true,settings->supportDLTv2Decoding);
+    if(qfile.getFileSuffix() == "txt")
+    {
+        msg.setMsgTxt(data);
+    }
+    else
+    {
+        msg.setMsg(data,true,settings->supportDLTv2Decoding);
+    }
     msg.setIndex(qfile.getMsgFilterPos(index.row()));
 
     /* decode message if necessary */
@@ -7350,7 +7272,7 @@ void MainWindow::on_exploreView_customContextMenuRequested(QPoint pos)
 
         if (is_file)
         {
-            action = new QAction("&Open DLT/PCAP/MF4/DLF file...", this);
+            action = new QAction("&Open DLT/PCAP/MF4/DLF/TXT file...", this);
             connect(action, &QAction::triggered, this, [this, indexes](){
                 auto selectedIndexes = indexes;
                 QStringList dltFileNames,pcapFileNames,mf4FileNames,dlfFileNames;
@@ -7361,7 +7283,7 @@ void MainWindow::on_exploreView_customContextMenuRequested(QPoint pos)
                    {
                        QString path = getPathFromExplorerViewIndexModel(index);
 
-                       if(path.endsWith(".dlt",Qt::CaseInsensitive))
+                       if(path.endsWith(".dlt",Qt::CaseInsensitive) || path.endsWith(".txt",Qt::CaseInsensitive))
                            dltFileNames+=path;
                        else if(path.endsWith(".pcap",Qt::CaseInsensitive))
                            pcapFileNames+=path;
@@ -7424,7 +7346,7 @@ void MainWindow::on_exploreView_customContextMenuRequested(QPoint pos)
             });
             menu.addAction(action);
 
-            action = new QAction("&Append DLT/PCAP/MF4/DLF file...", this);
+            action = new QAction("&Append DLT/PCAP/MF4/DLF/TXT file...", this);
             connect(action, &QAction::triggered, this, [this, indexes](){
                 QStringList  pathsList;
                 auto selectedIndexes = indexes;
@@ -7434,7 +7356,7 @@ void MainWindow::on_exploreView_customContextMenuRequested(QPoint pos)
                    if (0 == index.column())
                    {
                        QString i = getPathFromExplorerViewIndexModel(index);
-                       if(i.endsWith(".dlt",Qt::CaseInsensitive))
+                       if(i.endsWith(".dlt",Qt::CaseInsensitive) || i.endsWith(".txt",Qt::CaseInsensitive) )
                            appendDltFile(i);
                        else if(i.endsWith(".pcap",Qt::CaseInsensitive))
                        {
@@ -7458,7 +7380,7 @@ void MainWindow::on_exploreView_customContextMenuRequested(QPoint pos)
 
             if ((!path.toLower().endsWith(".dlp")) && (5 > indexes.size()))
             {
-                if ((path.toLower().endsWith(".dlt")))
+                if ((path.toLower().endsWith(".dlt") || (path.toLower().endsWith(".txt"))))
                 {
                     action = new QAction("&Open in new instance", this);
                     connect(action, &QAction::triggered, this, [this, indexes](){
@@ -7495,6 +7417,25 @@ void MainWindow::on_exploreView_customContextMenuRequested(QPoint pos)
                 outputfileIsTemporary = true;
             });
             menu.addAction(action);
+
+            action = new QAction("Open all TXT files", this);
+            connect(action, &QAction::triggered, this, [this, indexes](){
+                auto index = indexes[0];
+                auto path  = getPathFromExplorerViewIndexModel(index);
+
+                QStringList  files;
+                QDirIterator it_sh(path, QStringList() << "*.txt", QDir::Files, QDirIterator::Subdirectories);
+
+                while (it_sh.hasNext())
+                {
+                    files.append(it_sh.next());
+                }
+
+                openDltFile(files);
+                outputfileIsTemporary = true;
+            });
+            menu.addAction(action);
+
             action = new QAction("Append all PCAP/MF4 files", this);
             connect(action, &QAction::triggered, this, [this, indexes](){
                 auto index = indexes[0];
@@ -7703,7 +7644,7 @@ void MainWindow::dropEvent(QDropEvent *event)
             QUrl url = event->mimeData()->urls()[num];
             filename = url.toLocalFile();
 
-            if(filename.endsWith(".dlt", Qt::CaseInsensitive))
+            if(filename.endsWith(".dlt", Qt::CaseInsensitive) ||filename.endsWith(".txt", Qt::CaseInsensitive))
             {
                 filenames.append(filename);
                 workingDirectory.setDltDirectory(QFileInfo(filename).absolutePath());
@@ -8546,7 +8487,7 @@ void MainWindow::indexStart()
 
 void MainWindow::on_exploreView_activated(const QModelIndex &index)
 {
-    static const QStringList ext  = QStringList() << ".dlt" << ".dlf" << ".dlp" << ".pcap" << ".mf4";
+    static const QStringList ext  = QStringList() << ".dlt" << ".dlf" << ".dlp" << ".pcap" << ".mf4" << ".txt";
     QString                  path = getPathFromExplorerViewIndexModel(index);
 
     auto result = std::find_if(ext.begin(), ext.end(),
@@ -8555,6 +8496,7 @@ void MainWindow::on_exploreView_activated(const QModelIndex &index)
     switch(result - ext.begin())
     {
     case 0: /* this represents index in "ext" list */
+    case 5:
         openDltFile(QStringList() << path);
         outputfileIsTemporary = false;
         break;

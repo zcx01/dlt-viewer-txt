@@ -212,19 +212,26 @@ void File::freeFile(){
 }
 
 QByteArray* File::getFileData(){
-   QDltMsg msg;
-   QByteArray msgBuffer;
-   QDltArgument data;
+    QDltMsg msg;
+    QByteArray msgBuffer;
+    QDltArgument data;
 
-   fileData = new QByteArray();
+    fileData = new QByteArray();
 
     for(unsigned int i=0; i<packages;i++){
-       int qfileIdx = dltFileIndex->value(i);
-       msgBuffer =  dltFile->getMsg(qfileIdx);
-       msg.setMsg(msgBuffer);
-       msg.setIndex(qfileIdx);
-       msg.getArgument(PROTOCOL_FLDA_DATA,data);
-       fileData->append(data.getData());
+        int qfileIdx = dltFileIndex->value(i);
+        msgBuffer =  dltFile->getMsg(qfileIdx);
+        if(dltFile->getFileSuffix() == "txt")
+        {
+            msg.setMsgTxt(msgBuffer);
+        }
+        else
+        {
+            msg.setMsg(msgBuffer);
+        }
+        msg.setIndex(qfileIdx);
+        msg.getArgument(PROTOCOL_FLDA_DATA,data);
+        fileData->append(data.getData());
     }
 
     return fileData;

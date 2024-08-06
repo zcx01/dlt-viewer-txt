@@ -325,7 +325,6 @@ private:
     bool anyFiltersEnabled();
 
     bool openDltFile(QStringList fileName);
-    bool openTxtFile(QStringList fileNames);
     bool openDlpFile(QString filename);
     bool openDlfFile(QString filename, bool replace);
 
