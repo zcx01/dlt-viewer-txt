@@ -198,12 +198,6 @@ bool QDltFile::updateIndex()
 
     for(int numFile=0;numFile<files.size();numFile++)
     {
-        if(getFileSuffix(numFile)== "txt")
-        {
-            qDebug() << "txt no update" << files[numFile]->infile.fileName() << __FILE__ << "line" << __LINE__;
-            mutexQDlt.unlock();
-            return true;
-        }
         /* check if file is already opened */
         if(false == files[numFile]->infile.isOpen())
         {
@@ -212,6 +206,29 @@ bool QDltFile::updateIndex()
             return false;
         }
 
+        if(getFileSuffix(numFile)== "txt")
+        {
+            qDebug() << "txt update" << files[numFile]->infile.fileName() << __FILE__ << "line" << __LINE__;
+
+            if(files[numFile]->indexAll.size())
+            {
+                /* move behind last found position */
+                const QVector<qint64>* const_indexAll = &(files[numFile]->indexAll);
+                pos = (*const_indexAll)[files[numFile]->indexAll.size()-1];
+
+                // first move to beginnng of last found message
+                files[numFile]->infile.seek(pos);
+            }
+
+            while(! files[numFile]->infile.atEnd())
+            {
+                files[numFile]->infile .readLine();
+                files[numFile]->indexAll.append(files[numFile]->infile.pos());
+            }
+
+            mutexQDlt.unlock();
+            return true;
+        }
 
         /* start at last found position */
         if(files[numFile]->indexAll.size())
@@ -662,7 +679,7 @@ bool QDltFile::getMsg(int index,QDltMsg &msg)
     }
     // load message from DLT file
     QByteArray data = getMsg(index);
-    if(data.isEmpty())
+    if(data.isEmpty() && getFileSuffix() != "txt")
         return false;
     if (getFileSuffix() == "txt")
     {

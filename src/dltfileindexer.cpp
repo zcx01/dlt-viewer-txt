@@ -414,7 +414,6 @@ bool DltFileIndexer::indexTxt(int num)
 
 //    QTextStream inputTxt(&inputfile);
     int progressCounter = 1;
-    int lineCount = 0;
     indexAllList.append(inputfile.pos());
     while(!inputfile.atEnd())
     {
@@ -439,9 +438,8 @@ bool DltFileIndexer::indexTxt(int num)
 
         /* now write DLT message here */
 
-        inputfile.readLine();
+        inputfile .readLine();
         indexAllList.append(inputfile.pos());
-        lineCount++;
     }
     indexAllList.append(inputfile.pos());
     emit(progress((100)));
@@ -451,11 +449,6 @@ bool DltFileIndexer::indexTxt(int num)
     if ( errors_in_file != 0 )
     {
         qDebug() << "Indexing error:" << errors_in_file << "wrong DLT message headers found during indexing"  << "messages";
-    }
-
-    if ( lineCount > 0 )
-    {
-        qDebug().noquote() << "Created" << lineCount << "% index for file" << dltFile->getFileName(num);
     }
 
     // write index if enabled
