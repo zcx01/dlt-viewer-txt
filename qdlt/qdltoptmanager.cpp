@@ -230,7 +230,7 @@ void QDltOptManager::parse(QStringList *opt)
             workingDirectory = opt->value(i+1);
             ++i;
         }
-        else if(opt->at(i).endsWith(".dlt") || opt->at(i).endsWith(".DLT"))
+        else if(opt->at(i).endsWith(".dlt") || opt->at(i).endsWith(".DLT") || opt->at(i).endsWith(".txt"))
         {
             const QString logFile = QString("%1").arg(opt->at(i));
             logFiles += logFile;
